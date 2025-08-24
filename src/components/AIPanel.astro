@@ -1,0 +1,153 @@
+---
+// AI Panel Component
+import "../styles/ai-panel.css";
+---
+
+<!-- 右侧AI面板 -->
+<div class="panel ai-panel" id="ai-panel">
+	<div class="panel-content">
+		<div class="ai-header">
+			<span class="ai-title">AI Assistant</span>
+		</div>
+
+		<!-- AI Status Bar -->
+		<div class="ai-status-bar" id="ai-status-bar">
+			<div class="status-indicator" id="ai-status-indicator">
+				<span class="status-dot" id="status-dot">🔴</span>
+				<span class="status-text" id="status-text">Disconnected</span>
+			</div>
+			<div class="model-info" id="model-info">
+				<span id="current-model-display">llama3.2:latest</span>
+			</div>
+		</div>
+
+		<div class="output-area">
+			<div class="chat-history" id="ai-messages">
+				<!-- Welcome message -->
+				<div class="message-block welcome-message">
+					<div class="message-header">
+						<div class="avatar">AI</div>
+						<span class="sender-name">AI Assistant</span>
+						<span class="timestamp">now</span>
+						<span
+							class="copy-icon"
+							onclick="copyResponseToClipboard(this)"
+						>
+							<svg
+								width="12"
+								height="12"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<rect
+									x="9"
+									y="9"
+									width="13"
+									height="13"
+									rx="2"
+									ry="2"></rect>
+								<path
+									d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+								></path>
+							</svg>
+						</span>
+					</div>
+					<div class="message-body">
+						<div class="message-text">
+							Welcome! I'm your AI terminal assistant. Ask me
+							about commands, or type <code>/help</code> for available
+							commands.
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="ai-input-container">
+			<div class="input-wrapper">
+				<span class="prompt">></span>
+				<input
+					type="text"
+					id="ai-input"
+					placeholder="Ask AI or type /help, /models..."
+					autocomplete="off"
+					disabled
+				/>
+				<button id="send-ai" class="send-btn" disabled>
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<line x1="22" y1="2" x2="11" y2="13"></line>
+						<polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+					</svg>
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	// 声明全局函数类型
+	declare global {
+		interface Window {
+			copyResponseToClipboard: (element: HTMLElement) => void;
+			copyQuestionToInput: (question: string) => void;
+		}
+	}
+
+	// 复制响应内容到剪贴板
+	window.copyResponseToClipboard = function (element: HTMLElement) {
+		const messageBlock = element.closest(".message-block") as HTMLElement;
+		if (!messageBlock) return;
+
+		const messageText = messageBlock.querySelector(
+			".message-text",
+		) as HTMLElement;
+		if (!messageText) return;
+
+		const textContent =
+			messageText.textContent
+				?.replace(/^\s*\n+/g, "") // 去除开头的空行
+				.replace(/\n+\s*$/g, "") // 去除结尾的空行
+				.trim() || "";
+
+		navigator.clipboard
+			.writeText(textContent)
+			.then(() => {
+				// 显示复制成功的视觉反馈
+				const originalContent = element.innerHTML;
+				element.innerHTML = `
+				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="20 6 9 17 4 12"></polyline>
+				</svg>
+			`;
+				element.style.color = "#50fa7b";
+
+				setTimeout(() => {
+					element.innerHTML = originalContent;
+					element.style.color = "";
+				}, 2000);
+			})
+			.catch((err) => {
+				console.error("Failed to copy text: ", err);
+			});
+	};
+
+	// 复制问题到输入框
+	window.copyQuestionToInput = function (question: string) {
+		const input = document.getElementById("ai-input") as HTMLInputElement;
+		if (input) {
+			input.value = question;
+			input.focus();
+		}
+	};
+</script>

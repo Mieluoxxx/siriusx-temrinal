@@ -1,11 +1,1289 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import AIPanel from '../components/AIPanel.astro';
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="AI Terminal">
+	<div class="app-container">
+		<div class="macos-window" id="macos-window">
+			<!-- macOS 窗口头部 -->
+			<div class="window-titlebar" id="window-titlebar">
+				<div class="traffic-lights">
+					<button class="traffic-light close" id="close-btn" title="关闭"></button>
+					<button class="traffic-light minimize" id="minimize-btn" title="最小化"></button>
+					<button class="traffic-light maximize" id="maximize-btn" title="全屏"></button>
+				</div>
+				<div class="window-title">AI Terminal</div>
+				<div class="window-controls">
+					<button class="toggle-ai-button" id="global-toggle-ai" title="隐藏/显示 AI 面板">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+							<path d="m15 9-6 6"></path>
+							<path d="m9 9 6 6"></path>
+						</svg>
+					</button>
+				</div>
+			</div>
+
+			<div class="split-container" id="split-container">
+		<!-- 左侧Terminal面板 -->
+		<div class="panel terminal-panel" id="terminal-panel">
+			<div class="panel-content">
+				<div class="terminal-header">
+					<span class="panel-title">Terminal v2.0</span>
+					<!-- Show AI button - only visible when AI panel is hidden -->
+					<button class="toggle-ai-button" id="toggle-ai-button" style="display: none;">
+						Show AI
+					</button>
+					</div>
+
+				<!-- Terminal标签栏 -->
+				<div class="terminal-tabs">
+					<div class="tabs-container">
+						<div class="tab active" data-tab-id="1">
+							<span class="tab-name">Terminal 1</span>
+							<button class="close-tab">×</button>
+						</div>
+						<!-- Settings Tab - only show when settings is active -->
+						<div class="tab settings-tab" data-tab-id="settings" style="display: none;">
+							<span class="tab-name">Settings</span>
+							<button class="close-tab">×</button>
+						</div>
+						<button class="new-tab" id="add-tab">+</button>
+						<button class="settings-tab-btn" id="settings-tab-btn" title="Settings">⚙️</button>
+					</div>
+				</div>
+
+				<!-- Terminal内容区 -->
+				<div class="output-area" id="output-area">
+					<div class="terminal-container">
+						<div class="terminal-instance active" data-tab-id="1">
+							<div id="terminal-1" class="xterm-container"></div>
+						</div>
+					</div>
+					
+					<!-- Settings Panel - show when settings tab is active -->
+					<div class="settings-panel" id="settings-panel" style="display: none;">
+						<div class="settings-content">
+							<h2>AI Terminal Settings</h2>
+							
+							<!-- AI Service Configuration -->
+							<div class="settings-section">
+								<h3>AI Service Configuration</h3>
+								
+								<div class="setting-group">
+									<label>AI Service Provider:</label>
+									<select id="ai-service-type" class="setting-select">
+										<option value="ollama">Ollama (Local)</option>
+										<option value="openai">OpenAI Compatible (Remote)</option>
+									</select>
+								</div>
+								
+								<!-- Ollama Configuration -->
+								<div class="setting-group" id="ollama-settings">
+									<label>Ollama Host URL:</label>
+									<input type="text" id="ollama-host" class="setting-input" 
+										   placeholder="http://localhost:11434" value="http://localhost:11434">
+								</div>
+								
+								<div class="setting-group" id="ollama-model-settings">
+									<label>Ollama Model:</label>
+									<input type="text" id="current-model" class="setting-input" 
+										   placeholder="llama3.2:latest" value="llama3.2:latest">
+								</div>
+								
+								<!-- OpenAI Configuration -->
+								<div class="setting-group" id="openai-base-url-settings" style="display: none;">
+									<label>Base URL:</label>
+									<input type="text" id="openai-base-url" class="setting-input" 
+										   placeholder="https://api.openai.com/v1" value="https://api.openai.com/v1">
+								</div>
+								
+								<div class="setting-group" id="openai-token-settings" style="display: none;">
+									<label>API Token:</label>
+									<input type="password" id="openai-api-token" class="setting-input" 
+										   placeholder="Your API token">
+								</div>
+								
+								<div class="setting-group" id="openai-model-settings" style="display: none;">
+									<label>Model Name:</label>
+									<input type="text" id="openai-model" class="setting-input" 
+										   placeholder="gpt-3.5-turbo" value="gpt-3.5-turbo">
+								</div>
+							</div>
+							
+							<!-- Configuration Actions -->
+							<div class="settings-actions">
+								<button class="setting-button primary" id="test-connection">Test Connection</button>
+								<button class="setting-button" id="reset-defaults">Reset to Defaults</button>
+								<button class="setting-button" id="save-settings">Save Configuration</button>
+							</div>
+							
+							<!-- Status Display -->
+							<div class="settings-status" id="settings-status" style="display: none;">
+								<div class="status-message" id="status-message"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+					</div>
+				</div>
+
+		<!-- 拖拽分隔器 - 始终可见，支持面板宽度调整 -->
+		<div class="resizer" id="resizer">
+			<div class="resizer-handle">
+				<div class="resizer-dots">
+					<div class="dot"></div>
+					<div class="dot"></div>
+					<div class="dot"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- AI Panel Component -->
+		<AIPanel />
+			</div>
+		</div>
+	</div>
 </Layout>
+
+
+
+<script>
+	import { Terminal } from '@xterm/xterm';
+	import { FitAddon } from '@xterm/addon-fit';
+	import { WebLinksAddon } from '@xterm/addon-web-links';
+	import '@xterm/xterm/css/xterm.css';
+	import { themeManager } from '../config/themeManager.js';
+
+	// 全局变量
+	let terminals = new Map(); // 存储所有terminal实例
+	let websockets = new Map(); // 存储所有websocket连接
+	let fitAddons = new Map(); // 存储所有fitAddon实例
+	let activeTabId = 1;
+	let maxTabId = 1; // 记录曾经使用过的最大编号
+	let availableTabIds = []; // 可复用的编号池
+	
+	// 面板调整相关变量
+	let leftPanelWidth = 0; // 将在初始化时计算
+	let isResizing = false;
+	let startX = 0;
+	let startWidth = 0;
+	let isAIPanelVisible = true;
+	
+	// 初始化面板宽度
+	function initializePanelWidth() {
+		// 根据用户设置加载AI面板宽度，默认65%给左侧面板
+		const savedWidth = localStorage.getItem('ai-panel-width') || '35';
+		const aiPanelWidthPercent = parseInt(savedWidth);
+		leftPanelWidth = window.innerWidth * (100 - aiPanelWidthPercent) / 100;
+	}
+
+	document.addEventListener('DOMContentLoaded', async () => {
+		// 等待主题加载完成
+		await themeManager.loadThemes();
+		
+		// 初始化面板宽度
+		initializePanelWidth();
+		
+		// 暴露全局变量给其他模块使用
+		window.terminals = terminals;
+		window.websockets = websockets;
+		window.fitAddons = fitAddons;
+		window.activeTabId = activeTabId;
+		
+		// 初始化所有功能
+		initializeTerminal(1);
+		await initializeAI(); // Make async to handle AI service loading
+		setupEventListeners();
+		setupTabListeners();
+		setupResizeHandlers();
+		setupPanelToggle();
+		setupMacOSWindow();
+
+		
+		// 初始化关闭按钮可见性
+		updateCloseButtonVisibility();
+	});
+
+	function initializeTerminal(tabId) {
+		console.log(`Initializing terminal ${tabId}`);
+		const terminalElement = document.getElementById(`terminal-${tabId}`);
+		if (!terminalElement) {
+			console.error(`Terminal element #terminal-${tabId} not found!`);
+			return;
+		}
+		console.log('Terminal element found:', terminalElement);
+
+		// 获取当前主题配置
+		const terminalConfig = themeManager.getTerminalConfig();
+		
+		// 创建终端实例 - 使用主题管理器配置
+		const terminal = new Terminal(terminalConfig);
+
+		// 加载插件
+		const fitAddon = new FitAddon();
+		const webLinksAddon = new WebLinksAddon();
+		
+		terminal.loadAddon(fitAddon);
+		terminal.loadAddon(webLinksAddon);
+
+		// 存储实例
+		terminals.set(tabId, terminal);
+		fitAddons.set(tabId, fitAddon);
+
+		// 挂载到DOM
+		console.log('Opening terminal in element:', terminalElement);
+		terminal.open(terminalElement);
+		console.log('Terminal opened successfully');
+		
+
+		
+		// 自适应大小
+		setTimeout(() => {
+			console.log('Fitting terminal...');
+			fitAddon.fit();
+			console.log('Terminal fitted');
+		}, 100);
+
+		// 连接到WebSocket终端服务
+		connectToTerminal(tabId);
+
+		// 监听终端输入
+		terminal.onData((data) => {
+			const websocket = websockets.get(tabId);
+			if (websocket && websocket.readyState === WebSocket.OPEN) {
+				websocket.send(JSON.stringify({
+					type: 'input',
+					data: data
+				}));
+			}
+		});
+
+		// 监听终端大小变化
+		terminal.onResize(({ cols, rows }) => {
+			const websocket = websockets.get(tabId);
+			if (websocket && websocket.readyState === WebSocket.OPEN) {
+				websocket.send(JSON.stringify({
+					type: 'resize',
+					cols: cols,
+					rows: rows
+				}));
+			}
+		});
+	}
+
+	let isConnected = false;
+
+	function connectToTerminal(tabId) {
+		const terminal = terminals.get(tabId);
+		
+		try {
+			// 连接到WebSocket服务器
+			const websocket = new WebSocket('ws://localhost:8080/terminal');
+			websockets.set(tabId, websocket);
+
+			websocket.onopen = () => {
+				console.log('✅ WebSocket连接建立成功');
+				isConnected = true;
+			};
+
+			websocket.onmessage = (event) => {
+				try {
+					const message = JSON.parse(event.data);
+					
+					switch (message.type) {
+						case 'output':
+							terminal.write(message.data);
+							break;
+							
+						case 'connected':
+							terminal.write('\x1b[2J\x1b[H'); // 清屏
+							break;
+							
+						case 'exit':
+							terminal.writeln(`\x1b[31m\nTerminal process exited (code: ${message.code})\x1b[0m`);
+							isConnected = false;
+							break;
+							
+						case 'error':
+							terminal.writeln(`\x1b[31mError: ${message.message}\x1b[0m`);
+							isConnected = false;
+							break;
+					}
+				} catch (error) {
+					console.error('Failed to parse message:', error);
+				}
+			};
+
+			websocket.onerror = (error) => {
+				console.error('WebSocket错误:', error);
+				terminal.writeln('\x1b[31m\nConnection error. Please make sure the terminal server is running.\x1b[0m');
+				terminal.writeln('\x1b[33mRun: pnpm run server\x1b[0m');
+				isConnected = false;
+			};
+
+			websocket.onclose = () => {
+				console.log('WebSocket连接已关闭');
+				if (isConnected) {
+					terminal.writeln('\x1b[31m\nConnection lost\x1b[0m');
+				}
+				isConnected = false;
+			};
+
+		} catch (error) {
+			console.error('连接失败:', error);
+			terminal.writeln('\x1b[31mFailed to connect. Please ensure terminal server is running.\x1b[0m');
+		}
+	}
+
+	async function initializeAI() {
+		try {
+			// Load AI integration module
+			const { default: aiIntegration } = await import('../scripts/aiIntegration.js');
+			
+			// Make available globally for other functions
+			window.aiIntegration = aiIntegration;
+			
+			// Initialize AI services
+			await aiIntegration.initializeAIServices();
+			
+			// Initialize AI status and connection
+			await aiIntegration.initializeAIStatus();
+			
+			// Setup event listeners
+			aiIntegration.setupAIEventListeners();
+			
+			// Load existing chat history
+			aiIntegration.loadChatHistory();
+			
+			// Setup command buttons for any existing elements
+			aiIntegration.setupCommandButtons();
+			
+			console.log('✅ AI functionality fully initialized');
+			
+		} catch (error) {
+			console.error('❌ Failed to initialize AI functionality:', error);
+			
+			// Fallback: Show error message in AI panel
+			const messagesContainer = document.getElementById('ai-messages');
+			if (messagesContainer) {
+				const errorMessage = document.createElement('div');
+				errorMessage.className = 'chat-entry system-message error-message';
+				errorMessage.innerHTML = `
+					<div class="chat-question">
+						<span class="prompt">⚠️</span>
+						<span class="message">AI Service Error</span>
+					</div>
+					<div class="chat-output">
+						Failed to initialize AI functionality. Please check that Ollama is running and try refreshing the page.
+						<br><br>Error: ${error.message}
+					</div>
+				`;
+				messagesContainer.appendChild(errorMessage);
+			}
+		}
+	}
+
+	function setupEventListeners() {
+		// 窗口大小变化时重新适配
+		window.addEventListener('resize', () => {
+			// 重新计算面板宽度
+			const savedWidth = localStorage.getItem('ai-panel-width') || '35';
+			const aiPanelWidthPercent = parseInt(savedWidth);
+			leftPanelWidth = window.innerWidth * (100 - aiPanelWidthPercent) / 100;
+			
+			// 更新终端面板宽度
+			const terminalPanel = document.getElementById('terminal-panel');
+			if (terminalPanel && isAIPanelVisible) {
+				terminalPanel.style.width = `${leftPanelWidth}px`;
+			}
+			
+			// 重新适配终端大小
+			const terminal = terminals.get(activeTabId);
+			const fitAddon = fitAddons.get(activeTabId);
+			if (fitAddon && terminal) {
+				setTimeout(() => {
+					fitAddon.fit();
+				}, 100);
+			}
+		});
+
+
+
+
+
+
+
+		// 页面卸载时关闭连接
+		window.addEventListener('beforeunload', () => {
+			websockets.forEach((websocket) => {
+			if (websocket) {
+				websocket.close();
+			}
+			});
+		});
+	}
+
+	function setupTabListeners() {
+		const addTabBtn = document.getElementById('add-tab');
+		const settingsTabBtn = document.getElementById('settings-tab-btn');
+
+		// 新建标签页
+		addTabBtn?.addEventListener('click', () => {
+			createNewTab();
+		});
+
+		// Settings标签按钮
+		settingsTabBtn?.addEventListener('click', () => {
+			openSettings();
+		});
+
+		// 标签页点击事件委托
+		const tabsContainer = document.querySelector('.tabs-container');
+		tabsContainer?.addEventListener('click', (e) => {
+			const tab = e.target.closest('.tab');
+			const closeBtn = e.target.closest('.close-tab');
+			
+			if (closeBtn && tab) {
+				// 关闭标签
+				const tabId = tab.dataset.tabId;
+				if (tabId === 'settings') {
+					closeSettings();
+				} else {
+					closeTab(parseInt(tabId));
+				}
+				e.stopPropagation();
+			} else if (tab) {
+				// 切换标签
+				const tabId = tab.dataset.tabId;
+				if (tabId === 'settings') {
+					switchToSettings();
+				} else {
+					switchToTab(parseInt(tabId));
+				}
+			}
+		});
+	}
+
+	function createNewTab() {
+		// 优先使用可复用的编号，如果没有则使用新编号
+		let tabId;
+		if (availableTabIds.length > 0) {
+			// 使用最小的可用编号
+			availableTabIds.sort((a, b) => a - b);
+			tabId = availableTabIds.shift();
+					} else {
+			// 使用新编号
+			tabId = ++maxTabId;
+		}
+		
+		// 创建标签元素
+		const tab = document.createElement('div');
+		tab.className = 'tab';
+		tab.dataset.tabId = tabId;
+					tab.innerHTML = `
+			<span class="tab-name">Terminal ${tabId}</span>
+			<button class="close-tab">×</button>
+		`;
+
+		// 创建Terminal实例容器
+		const terminalInstance = document.createElement('div');
+		terminalInstance.className = 'terminal-instance';
+		terminalInstance.dataset.tabId = tabId;
+		terminalInstance.innerHTML = `<div id="terminal-${tabId}" class="xterm-container"></div>`;
+
+		// 添加到DOM
+		document.querySelector('.tabs-container').insertBefore(tab, document.querySelector('.new-tab'));
+		document.querySelector('.terminal-container').appendChild(terminalInstance);
+
+		// 切换到新标签并初始化Terminal
+		switchToTab(tabId);
+		setTimeout(() => {
+			initializeTerminal(tabId);
+		}, 50);
+
+		// 更新关闭按钮可见性
+		updateCloseButtonVisibility();
+	}
+
+	function switchToTab(tabId) {
+		// 更新活跃标签状态
+		document.querySelectorAll('.tab').forEach(tab => {
+			tab.classList.remove('active');
+		});
+		document.querySelector(`[data-tab-id="${tabId}"]`).classList.add('active');
+
+		// 更新Terminal实例显示状态
+		document.querySelectorAll('.terminal-instance').forEach(instance => {
+			instance.classList.toggle('active', parseInt(instance.dataset.tabId) === tabId);
+		});
+
+		// 隐藏Settings面板
+		const settingsPanel = document.getElementById('settings-panel');
+		if (settingsPanel) {
+			settingsPanel.style.display = 'none';
+		}
+
+		// 更新当前活跃标签ID
+		activeTabId = tabId;
+		window.activeTabId = activeTabId; // Update global variable
+
+		// 重新适配当前Terminal大小
+		const terminal = terminals.get(tabId);
+		const fitAddon = fitAddons.get(tabId);
+		if (terminal && fitAddon) {
+			setTimeout(() => {
+				fitAddon.fit();
+			}, 100);
+		}
+	}
+
+	function closeTab(tabId) {
+		const allTabs = document.querySelectorAll('.tab');
+		
+		// 如果是最后一个标签，先创建一个新标签再关闭当前标签
+		if (allTabs.length <= 1) {
+			createNewTab();
+			// 等待新标签创建完成后再关闭当前标签
+			setTimeout(() => {
+				proceedWithTabClose(tabId);
+			}, 50);
+			return;
+		}
+		
+		proceedWithTabClose(tabId);
+	}
+	
+	function proceedWithTabClose(tabId) {
+		// 将关闭的标签编号添加到可复用列表
+		availableTabIds.push(tabId);
+		availableTabIds.sort((a, b) => a - b); // 保持有序
+
+		// 关闭WebSocket连接
+		const websocket = websockets.get(tabId);
+			if (websocket) {
+				websocket.close();
+			websockets.delete(tabId);
+		}
+
+		// 销毁Terminal实例
+		const terminal = terminals.get(tabId);
+		if (terminal) {
+			terminal.dispose();
+			terminals.delete(tabId);
+		}
+
+		// 删除fitAddon
+		fitAddons.delete(tabId);
+
+		// 删除DOM元素
+		const tab = document.querySelector(`[data-tab-id="${tabId}"].tab`);
+		const instance = document.querySelector(`[data-tab-id="${tabId}"].terminal-instance`);
+		
+		tab?.remove();
+		instance?.remove();
+
+		// 如果关闭的是当前活跃标签，切换到第一个可用标签
+		if (activeTabId === tabId) {
+			const firstTab = document.querySelector('.tab');
+			if (firstTab) {
+				const firstTabId = parseInt(firstTab.dataset.tabId);
+				switchToTab(firstTabId);
+			}
+		}
+
+		// 更新关闭按钮可见性
+		updateCloseButtonVisibility();
+	}
+
+	// 更新所有标签的关闭按钮可见性
+	function updateCloseButtonVisibility() {
+		const allTabs = document.querySelectorAll('.tab:not(.settings-tab)');
+		const showCloseButtons = allTabs.length > 1;
+		
+		allTabs.forEach(tab => {
+			const closeButton = tab.querySelector('.close-tab');
+			if (closeButton) {
+				closeButton.style.display = showCloseButtons ? 'block' : 'none';
+			}
+		});
+	}
+
+	// Settings相关函数
+	let isSettingsActive = false;
+
+	function openSettings() {
+		isSettingsActive = true;
+		
+		// 显示Settings标签
+		const settingsTab = document.querySelector('.settings-tab');
+		if (settingsTab) {
+			settingsTab.style.display = 'flex';
+		}
+		
+		// 切换到Settings
+		switchToSettings();
+		
+		// 加载设置
+		loadAISettings();
+	}
+
+	function closeSettings() {
+		isSettingsActive = false;
+		
+		// 隐藏Settings标签
+		const settingsTab = document.querySelector('.settings-tab');
+		if (settingsTab) {
+			settingsTab.style.display = 'none';
+		}
+		
+		// 切换到第一个Terminal标签
+		const firstTab = document.querySelector('.tab:not(.settings-tab)');
+		if (firstTab) {
+			const firstTabId = parseInt(firstTab.dataset.tabId);
+			switchToTab(firstTabId);
+		}
+	}
+
+	function switchToSettings() {
+		// 更新标签状态
+		document.querySelectorAll('.tab').forEach(tab => {
+			tab.classList.remove('active');
+		});
+		document.querySelector('.settings-tab').classList.add('active');
+
+		// 隐藏所有Terminal实例
+		document.querySelectorAll('.terminal-instance').forEach(instance => {
+			instance.classList.remove('active');
+		});
+
+		// 显示Settings面板
+		const settingsPanel = document.getElementById('settings-panel');
+		if (settingsPanel) {
+			settingsPanel.style.display = 'block';
+		}
+
+		// 设置服务类型切换监听器
+		setupSettingsListeners();
+	}
+
+	function setupSettingsListeners() {
+		// AI服务类型切换
+		const serviceTypeSelect = document.getElementById('ai-service-type');
+		serviceTypeSelect?.addEventListener('change', toggleServiceSettings);
+
+		// 按钮事件
+		document.getElementById('test-connection')?.addEventListener('click', testAIConnection);
+		document.getElementById('reset-defaults')?.addEventListener('click', resetAIDefaults);
+		document.getElementById('save-settings')?.addEventListener('click', saveAISettings);
+
+		// 初始显示正确的设置区域
+		toggleServiceSettings();
+	}
+
+	function toggleServiceSettings() {
+		const serviceType = document.getElementById('ai-service-type').value;
+		const ollamaSettings = document.querySelectorAll('#ollama-settings, #ollama-model-settings');
+		const openaiSettings = document.querySelectorAll('#openai-base-url-settings, #openai-token-settings, #openai-model-settings');
+
+		if (serviceType === 'ollama') {
+			ollamaSettings.forEach(el => el.style.display = 'block');
+			openaiSettings.forEach(el => el.style.display = 'none');
+		} else {
+			ollamaSettings.forEach(el => el.style.display = 'none');
+			openaiSettings.forEach(el => el.style.display = 'block');
+		}
+	}
+
+	async function loadAISettings() {
+		try {
+			const response = await fetch('/api/ai-config');
+			const config = await response.json();
+
+			if (config.ai) {
+				// 服务类型
+				const serviceTypeSelect = document.getElementById('ai-service-type');
+				if (serviceTypeSelect) {
+					serviceTypeSelect.value = config.ai.serviceType || 'ollama';
+				}
+
+				// Ollama设置
+				if (config.ai.ollama) {
+					const ollamaHost = document.getElementById('ollama-host');
+					if (ollamaHost) ollamaHost.value = config.ai.ollama.host || 'http://localhost:11434';
+
+					const currentModel = document.getElementById('current-model');
+					if (currentModel) currentModel.value = config.ai.ollama.model || 'llama3.2:latest';
+				}
+
+				// OpenAI设置
+				if (config.ai.openai) {
+					const openaiBaseUrl = document.getElementById('openai-base-url');
+					if (openaiBaseUrl) openaiBaseUrl.value = config.ai.openai.baseUrl || 'https://api.openai.com/v1';
+
+					const openaiApiToken = document.getElementById('openai-api-token');
+					if (openaiApiToken) openaiApiToken.value = config.ai.openai.apiToken || '';
+
+					const openaiModel = document.getElementById('openai-model');
+					if (openaiModel) openaiModel.value = config.ai.openai.model || 'gpt-3.5-turbo';
+				}
+			}
+
+			toggleServiceSettings();
+		} catch (error) {
+			console.error('Error loading AI settings:', error);
+			showSettingsStatus('Failed to load settings', 'error');
+		}
+	}
+
+	async function testAIConnection() {
+		const serviceType = document.getElementById('ai-service-type').value;
+		showSettingsStatus('Testing connection...', 'warning');
+
+		try {
+			if (serviceType === 'ollama') {
+				const host = document.getElementById('ollama-host').value;
+				const response = await fetch(`${host}/api/tags`);
+				
+				if (response.ok) {
+					showSettingsStatus('Ollama connection successful!', 'success');
+				} else {
+					throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+				}
+			} else if (serviceType === 'openai') {
+				const baseUrl = document.getElementById('openai-base-url').value;
+				const apiToken = document.getElementById('openai-api-token').value;
+				
+				if (!apiToken) {
+					throw new Error('API token is required for OpenAI service');
+				}
+				
+				const response = await fetch(`${baseUrl}/models`, {
+					method: 'GET',
+					headers: {
+						'Authorization': `Bearer ${apiToken}`
+					}
+				});
+				
+				if (response.ok) {
+					showSettingsStatus('OpenAI API connection successful!', 'success');
+				} else {
+					const errorText = await response.text();
+					throw new Error(`HTTP ${response.status}: ${errorText}`);
+				}
+			}
+		} catch (error) {
+			showSettingsStatus(`Connection failed: ${error.message}`, 'error');
+		}
+	}
+
+	async function saveAISettings() {
+		try {
+			showSettingsStatus('Saving settings...', 'warning');
+
+			// 获取当前AI配置
+			const response = await fetch('/api/ai-config');
+			const config = await response.json();
+
+			// 更新AI设置
+			config.ai = {
+				serviceType: document.getElementById('ai-service-type').value,
+				ollama: {
+					host: document.getElementById('ollama-host').value,
+					model: document.getElementById('current-model').value
+				},
+				openai: {
+					baseUrl: document.getElementById('openai-base-url').value,
+					apiToken: document.getElementById('openai-api-token').value,
+					model: document.getElementById('openai-model').value
+				},
+				parameters: config.ai.parameters || {
+					temperature: 0.7,
+					topP: 0.9,
+					maxTokens: 512,
+					systemPrompt: ''
+				}
+			};
+
+			// 保存到ai-config.yaml
+			const saveResponse = await fetch('/api/ai-config', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(config)
+			});
+
+			if (saveResponse.ok) {
+				showSettingsStatus('Settings saved successfully!', 'success');
+				
+				// 重新初始化AI服务
+				if (window.aiIntegration) {
+					await window.aiIntegration.initializeAIStatus();
+				}
+			} else {
+				throw new Error('Failed to save settings');
+			}
+		} catch (error) {
+			console.error('Error saving AI settings:', error);
+			showSettingsStatus('Failed to save settings', 'error');
+		}
+	}
+
+	async function resetAIDefaults() {
+		if (confirm('Are you sure you want to reset AI settings to defaults?')) {
+			try {
+				showSettingsStatus('Resetting to defaults...', 'warning');
+
+				const defaultConfig = {
+					ai: {
+						serviceType: 'ollama',
+						ollama: {
+							host: 'http://localhost:11434',
+							model: 'llama3.2:latest'
+						},
+						openai: {
+							baseUrl: 'https://api.openai.com/v1',
+							apiToken: '',
+							model: 'gpt-3.5-turbo'
+						},
+						parameters: {
+							temperature: 0.7,
+							topP: 0.9,
+							maxTokens: 512,
+							systemPrompt: ''
+						}
+					}
+				};
+
+				const saveResponse = await fetch('/api/ai-config', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(defaultConfig)
+				});
+
+				if (saveResponse.ok) {
+					showSettingsStatus('Settings reset to defaults!', 'success');
+					loadAISettings(); // 重新加载设置
+				} else {
+					throw new Error('Failed to reset settings');
+				}
+			} catch (error) {
+				console.error('Error resetting settings:', error);
+				showSettingsStatus('Failed to reset settings', 'error');
+			}
+		}
+	}
+
+	function showSettingsStatus(message, type) {
+		const statusDiv = document.getElementById('settings-status');
+		const messageDiv = document.getElementById('status-message');
+		
+		if (statusDiv && messageDiv) {
+			statusDiv.style.display = 'block';
+			messageDiv.textContent = message;
+			messageDiv.className = `status-message ${type}`;
+
+			// 自动隐藏成功和错误消息
+			if (type === 'success' || type === 'error') {
+				setTimeout(() => {
+					statusDiv.style.display = 'none';
+				}, 3000);
+			}
+		}
+	}
+	
+	// 设置面板拖拽调整功能
+	function setupResizeHandlers() {
+		const resizer = document.getElementById('resizer');
+		const splitContainer = document.getElementById('split-container');
+		const terminalPanel = document.getElementById('terminal-panel');
+		const aiPanel = document.getElementById('ai-panel');
+
+		if (resizer && terminalPanel && aiPanel) {
+			// 设置初始宽度
+			updatePanelWidths();
+
+			resizer.addEventListener('mousedown', startResize);
+			resizer.addEventListener('touchstart', startResize);
+
+			// 鼠标和触摸事件
+			document.addEventListener('mousemove', onMouseMove);
+			document.addEventListener('touchmove', onTouchMove);
+			document.addEventListener('mouseup', stopResize);
+			document.addEventListener('touchend', stopResize);
+		}
+
+		function updatePanelWidths() {
+			if (isAIPanelVisible) {
+				terminalPanel.style.width = `${leftPanelWidth}px`;
+				aiPanel.style.width = `${window.innerWidth - leftPanelWidth - 4}px`; // 减去分隔器宽度
+			} else {
+				terminalPanel.style.width = '100%';
+			}
+		}
+
+		function startResize(e) {
+			if (!isAIPanelVisible) return; // 只有AI面板可见时才允许调整
+			
+			isResizing = true;
+			startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+			startWidth = leftPanelWidth;
+			
+			// 添加调整中的视觉反馈
+			resizer.classList.add('resizing');
+			splitContainer.classList.add('resizing-active');
+			document.body.style.cursor = 'col-resize';
+			document.body.style.userSelect = 'none';
+			
+			e.preventDefault();
+		}
+
+		function onMouseMove(e) {
+			if (!isResizing) return;
+			
+			const currentX = e.clientX;
+			const diff = currentX - startX;
+			const newWidth = startWidth + diff;
+			
+			// 限制最小和最大宽度
+			const minWidth = 250;
+			const maxWidth = window.innerWidth * 0.75;
+			const finalWidth = Math.min(Math.max(newWidth, minWidth), maxWidth);
+			
+			leftPanelWidth = finalWidth;
+			updatePanelWidths();
+			
+			// 重新调整当前活跃的终端大小
+			const fitAddon = fitAddons.get(activeTabId);
+			if (fitAddon) {
+				setTimeout(() => {
+					fitAddon.fit();
+				}, 10);
+			}
+		}
+
+		function onTouchMove(e) {
+			if (!isResizing) return;
+			
+			e.preventDefault();
+			const currentX = e.touches[0].clientX;
+			const diff = currentX - startX;
+			const newWidth = startWidth + diff;
+			
+			const minWidth = 250;
+			const maxWidth = window.innerWidth * 0.75;
+			const finalWidth = Math.min(Math.max(newWidth, minWidth), maxWidth);
+			
+			leftPanelWidth = finalWidth;
+			updatePanelWidths();
+			
+			const fitAddon = fitAddons.get(activeTabId);
+			if (fitAddon) {
+				setTimeout(() => {
+					fitAddon.fit();
+				}, 10);
+			}
+		}
+
+		function stopResize() {
+			if (isResizing) {
+				isResizing = false;
+				resizer.classList.remove('resizing');
+				splitContainer.classList.remove('resizing-active');
+				document.body.style.cursor = '';
+				document.body.style.userSelect = '';
+				
+				// 保存调整后的宽度设置
+				const aiPanelWidthPercent = Math.round((window.innerWidth - leftPanelWidth) / window.innerWidth * 100);
+				localStorage.setItem('ai-panel-width', aiPanelWidthPercent.toString());
+			}
+		}
+
+		// 暴露updatePanelWidths函数供其他地方使用
+		window.updatePanelWidths = updatePanelWidths;
+	}
+
+	// 设置面板切换功能
+	function setupPanelToggle() {
+		const globalToggleAI = document.getElementById('global-toggle-ai');
+		const aiPanel = document.getElementById('ai-panel');
+		const resizer = document.getElementById('resizer');
+		const terminalPanel = document.getElementById('terminal-panel');
+
+		function toggleAIPanel() {
+			isAIPanelVisible = !isAIPanelVisible;
+			
+			if (isAIPanelVisible) {
+				// 显示AI面板
+				aiPanel.style.display = 'flex';
+				resizer.style.display = 'block';
+				terminalPanel.classList.remove('full-width');
+				terminalPanel.style.width = '';  // 清除inline style，使用CSS默认
+				
+				// 更新按钮图标 - 显示关闭图标
+				globalToggleAI.innerHTML = `
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+						<path d="m15 9-6 6"></path>
+						<path d="m9 9 6 6"></path>
+					</svg>
+				`;
+			} else {
+				// 隐藏AI面板
+				aiPanel.style.display = 'none';
+				resizer.style.display = 'none';
+				terminalPanel.classList.add('full-width');
+				terminalPanel.style.width = '';  // 清除inline style，让CSS full-width生效
+				
+				// 更新按钮图标 - 显示侧边栏图标
+				globalToggleAI.innerHTML = `
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+						<line x1="9" y1="3" x2="9" y2="21"></line>
+					</svg>
+				`;
+			}
+			
+			// 重新调整终端大小
+			setTimeout(() => {
+				const fitAddon = fitAddons.get(activeTabId);
+				if (fitAddon) {
+					fitAddon.fit();
+				}
+			}, 300);
+		}
+
+		globalToggleAI?.addEventListener('click', toggleAIPanel);
+	}
+
+	// macOS 窗口功能
+	function setupMacOSWindow() {
+		const macosWindow = document.getElementById('macos-window');
+		const titlebar = document.getElementById('window-titlebar');
+		const closeBtn = document.getElementById('close-btn');
+		const minimizeBtn = document.getElementById('minimize-btn');
+		const maximizeBtn = document.getElementById('maximize-btn');
+
+		if (!macosWindow || !titlebar) return;
+
+		let isDragging = false;
+		let dragStartX = 0;
+		let dragStartY = 0;
+		let windowStartX = 0;
+		let windowStartY = 0;
+		let isMaximized = false;
+
+		// 窗口拖拽功能
+		titlebar.addEventListener('mousedown', (e) => {
+			if (e.target.classList.contains('traffic-light')) return;
+			
+			isDragging = true;
+			dragStartX = e.clientX;
+			dragStartY = e.clientY;
+			
+			const rect = macosWindow.getBoundingClientRect();
+			windowStartX = rect.left;
+			windowStartY = rect.top;
+			
+			macosWindow.style.transition = 'none';
+			document.addEventListener('mousemove', handleDrag);
+			document.addEventListener('mouseup', stopDrag);
+		});
+
+		function handleDrag(e) {
+			if (!isDragging) return;
+			
+			const deltaX = e.clientX - dragStartX;
+			const deltaY = e.clientY - dragStartY;
+			
+			const newX = windowStartX + deltaX;
+			const newY = windowStartY + deltaY;
+			
+			// 限制窗口不超出视窗边界
+			const maxX = window.innerWidth - macosWindow.offsetWidth;
+			const maxY = window.innerHeight - macosWindow.offsetHeight;
+			
+			const boundedX = Math.max(0, Math.min(newX, maxX));
+			const boundedY = Math.max(0, Math.min(newY, maxY));
+			
+			macosWindow.style.left = boundedX + 'px';
+			macosWindow.style.top = boundedY + 'px';
+			macosWindow.style.position = 'fixed';
+		}
+
+		function stopDrag() {
+			isDragging = false;
+			macosWindow.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+			document.removeEventListener('mousemove', handleDrag);
+			document.removeEventListener('mouseup', stopDrag);
+		}
+
+		// 窗口控制按钮功能
+		closeBtn?.addEventListener('click', () => {
+			macosWindow.style.transform = 'scale(0.8)';
+			macosWindow.style.opacity = '0';
+			setTimeout(() => {
+				window.close();
+			}, 300);
+		});
+
+		minimizeBtn?.addEventListener('click', () => {
+			macosWindow.style.transform = 'scale(0.1) translateY(100vh)';
+			macosWindow.style.opacity = '0';
+			setTimeout(() => {
+				macosWindow.style.transform = 'scale(1)';
+				macosWindow.style.opacity = '1';
+			}, 1000);
+		});
+
+		maximizeBtn?.addEventListener('click', () => {
+			if (isMaximized) {
+				// 恢复窗口
+				macosWindow.style.width = '90vw';
+				macosWindow.style.height = '90vh';
+				macosWindow.style.left = '50%';
+				macosWindow.style.top = '50%';
+				macosWindow.style.transform = 'translate(-50%, -50%)';
+				macosWindow.style.position = 'relative';
+				isMaximized = false;
+			} else {
+				// 最大化窗口
+				macosWindow.style.width = '100vw';
+				macosWindow.style.height = '100vh';
+				macosWindow.style.left = '0';
+				macosWindow.style.top = '0';
+				macosWindow.style.transform = 'none';
+				macosWindow.style.position = 'fixed';
+				isMaximized = true;
+			}
+			
+			// 调整终端大小
+			setTimeout(() => {
+				terminals.forEach((terminal, tabId) => {
+					const fitAddon = fitAddons.get(tabId);
+					if (fitAddon) {
+						fitAddon.fit();
+					}
+				});
+			}, 350);
+		});
+
+		// 双击标题栏最大化/还原
+		titlebar.addEventListener('dblclick', () => {
+			maximizeBtn?.click();
+		});
+
+		// 窗口大小调整监听
+		window.addEventListener('resize', () => {
+			if (isDragging) return;
+			
+			// 调整终端大小
+			setTimeout(() => {
+				terminals.forEach((terminal, tabId) => {
+					const fitAddon = fitAddons.get(tabId);
+					if (fitAddon) {
+						fitAddon.fit();
+					}
+				});
+			}, 100);
+		});
+	}
+
+
+
+	// Add additional AI functionality styles
+	const additionalStyles = `
+
+		
+		.toggle-ai-button {
+			background: var(--bg-secondary);
+			border: 1px solid var(--border-color);
+			color: var(--text-primary);
+			padding: 6px 8px;
+			border-radius: 6px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		
+		.toggle-ai-button:hover {
+			background: var(--bg-hover);
+			transform: translateY(-1px);
+		}
+		
+		.toggle-ai-button svg {
+			flex-shrink: 0;
+		}
+
+		/* 修复两列底部对齐问题 */
+		.split-container {
+			display: flex;
+			height: calc(100vh - 40px); /* 减去窗口标题栏高度 */
+			overflow: hidden;
+		}
+
+		.terminal-panel {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			background: var(--bg-primary);
+			border-right: 1px solid var(--border-color);
+			flex: 1;
+		}
+
+		.terminal-panel.full-width {
+			flex: 1;
+			max-width: 100%;
+		}
+
+		.ai-panel {
+			height: 100% !important; /* 确保AI面板使用100%高度 */
+			max-height: 100% !important;
+			flex: 1 !important; /* 确保AI面板使用flex布局 */
+		}
+
+		.panel-content {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+		}
+
+		.output-area {
+			flex: 1;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.terminal-container {
+			flex: 1;
+			overflow: hidden;
+		}
+
+		.terminal-instance {
+			height: 100%;
+			display: none;
+		}
+
+		.terminal-instance.active {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.xterm-container {
+			flex: 1;
+			overflow: hidden;
+		}
+	`;
+	
+	// Inject additional styles
+	const styleElement = document.createElement('style');
+	styleElement.textContent = additionalStyles;
+	document.head.appendChild(styleElement);
+</script>

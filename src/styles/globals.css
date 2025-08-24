@@ -1,0 +1,171 @@
+/* ================================
+   AI Terminal - Global Styles
+   ================================ */
+
+:root {
+	/* ================================
+	   主题变量 - 通过 /src/config/themes.js 管理
+	   这里的值作为默认值，实际值会被JavaScript动态设置
+	   ================================ */
+	   
+	/* Background Colors */
+	--bg-primary: #282a36;
+	--bg-secondary: #21222c;
+	--bg-tertiary: #1e1f29;
+	--bg-quaternary: #44475a;
+	
+	/* Border Colors */
+	--border-primary: #44475a;
+	--border-secondary: #6272a4;
+	
+	/* Text Colors */
+	--text-primary: #f8f8f2;
+	--text-secondary: #f8f8f2;
+	--text-tertiary: #6272a4;
+	
+	/* Accent Colors */
+	--accent-blue: #8be9fd;
+	--accent-green: #50fa7b;
+	--accent-yellow: #f1fa8c;
+	--accent-red: #ff5555;
+	--accent-purple: #bd93f9;
+	--accent-pink: #ff79c6;
+	--accent-orange: #ffb86c;
+	--terminal-green: #50fa7b;
+	
+	/* Shadow Values */
+	--shadow-light: rgba(0, 0, 0, 0.1);
+	--shadow-medium: rgba(0, 0, 0, 0.25);
+	--shadow-heavy: rgba(0, 0, 0, 0.6);
+	
+	/* Transition Values */
+	--transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	--transition-spring: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	
+	/* Border Radius Values */
+	--radius-small: 4px;
+	--radius-medium: 8px;
+	--radius-large: 12px;
+	--radius-full: 50%;
+}
+
+/* Global Resets */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	min-height: 100vh;
+	font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+	font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+	background: var(--bg-primary);
+	color: var(--text-primary);
+	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Selection Colors */
+::selection {
+	background: rgba(0, 212, 255, 0.3);
+	color: var(--text-primary);
+}
+
+::-moz-selection {
+	background: rgba(0, 212, 255, 0.3);
+	color: var(--text-primary);
+}
+
+/* Focus Styles */
+:focus-visible {
+	outline: 2px solid var(--accent-blue);
+	outline-offset: 2px;
+	border-radius: var(--radius-sm);
+}
+
+/* Scrollbar Base Styles */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.03);
+}
+
+*::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+	background: rgba(255, 255, 255, 0.03);
+	border-radius: 4px;
+	margin: 4px 0;
+}
+
+*::-webkit-scrollbar-thumb {
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+	border-radius: 4px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	transition: var(--transition-smooth);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(180deg, var(--accent-blue) 0%, rgba(0, 122, 204, 0.8) 100%);
+}
+
+/* Animation Keyframes */
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.6; }
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(10px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+	from { transform: translateX(-10px); opacity: 0; }
+	to { transform: translateX(0); opacity: 1; }
+}
+
+/* 文字闪烁动画 */
+@keyframes blink {
+	0%, 50% { opacity: 1; }
+	51%, 100% { opacity: 0; }
+}
+
+@keyframes slowBlink {
+	0%, 70% { opacity: 1; }
+	71%, 100% { opacity: 0; }
+}
+
+@keyframes fastBlink {
+	0%, 30% { opacity: 1; }
+	31%, 100% { opacity: 0; }
+}
+
+/* Utility Classes */
+.fade-in {
+	animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in {
+	animation: slideIn 0.3s ease-out;
+}
+
+/* Print Styles */
+@media print {
+	* {
+		background: transparent !important;
+		color: black !important;
+		box-shadow: none !important;
+	}
+}

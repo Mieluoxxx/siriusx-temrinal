@@ -1,0 +1,1017 @@
+/* ================================
+   AI Terminal - Dracula Theme Styles
+   ================================ */
+
+/* Main App Container */
+.app-container {
+	width: 100%;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+	font-size: 14px;
+	background: linear-gradient(135deg, #1e1f29 0%, #282a36 100%);
+	color: var(--text-primary);
+	overflow: hidden;
+	user-select: none;
+}
+
+/* macOS Window Container */
+.macos-window {
+	width: 90vw;
+	height: 90vh;
+	background: var(--bg-primary);
+	border-radius: 12px;
+	box-shadow: 
+		0 32px 64px rgba(0, 0, 0, 0.4),
+		0 0 0 1px rgba(255, 255, 255, 0.1),
+		inset 0 1px 0 rgba(255, 255, 255, 0.05);
+	overflow: hidden;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	min-width: 800px;
+	min-height: 600px;
+	resize: both;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* macOS Window Titlebar */
+.window-titlebar {
+	height: 36px;
+	background: linear-gradient(180deg, 
+		rgba(68, 71, 90, 0.95) 0%, 
+		rgba(40, 42, 54, 0.95) 100%);
+	backdrop-filter: blur(20px);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 16px;
+	cursor: move;
+	user-select: none;
+	position: relative;
+}
+
+/* Traffic Lights (窗口控制按钮) */
+.traffic-lights {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.traffic-light {
+	width: 12px;
+	height: 12px;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	position: relative;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.traffic-light.close {
+	background: #ff5f57;
+}
+
+.traffic-light.minimize {
+	background: #ffbd2e;
+}
+
+.traffic-light.maximize {
+	background: #28ca42;
+}
+
+.traffic-light:hover {
+	filter: brightness(1.1);
+	transform: scale(1.05);
+}
+
+.traffic-light:active {
+	transform: scale(0.95);
+}
+
+/* Window Title */
+.window-title {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-primary);
+	opacity: 0.8;
+}
+
+.window-controls {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.theme-toggle-button {
+	background: none;
+	border: none;
+	font-size: 16px;
+	cursor: pointer;
+	padding: 4px 6px;
+	border-radius: 4px;
+	transition: all 0.2s ease;
+	opacity: 0.7;
+}
+
+.theme-toggle-button:hover {
+	background: rgba(255, 255, 255, 0.1);
+	opacity: 1;
+	transform: scale(1.1);
+}
+
+/* macOS Window States */
+.macos-window.dragging {
+	box-shadow: 
+		0 48px 80px rgba(0, 0, 0, 0.5),
+		0 0 0 1px rgba(255, 255, 255, 0.15),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.macos-window.maximized {
+	border-radius: 0 !important;
+}
+
+/* 窗口拖拽时的光标 */
+.window-titlebar.dragging {
+	cursor: grabbing;
+}
+
+/* 窗口边缘调整大小句柄 */
+.macos-window::before {
+	content: '';
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	width: 16px;
+	height: 16px;
+	background: linear-gradient(-45deg, 
+		transparent 40%, 
+		rgba(255, 255, 255, 0.1) 50%,
+		transparent 60%);
+	cursor: nw-resize;
+	opacity: 0.5;
+	transition: opacity 0.2s ease;
+}
+
+.macos-window:hover::before {
+	opacity: 0.8;
+}
+
+/* Split Container for Dual Pane Layout */
+.split-container {
+	display: flex;
+	width: 100%;
+	height: calc(100vh - 40px); /* 减去窗口标题栏高度 */
+	position: relative;
+	overflow: hidden;
+	flex: 1;
+	align-items: stretch;
+}
+
+/* Left Terminal Panel */
+.panel {
+	height: 100%;
+	background: var(--bg-primary);
+	color: var(--text-primary);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border-radius: 8px;
+}
+
+.terminal-panel {
+	flex: 1;
+	min-width: 250px;
+	max-width: none;
+	margin: 0;
+	overflow: hidden;
+	border: 1px solid var(--border-primary);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	transition: width 0.1s ease;
+}
+
+.ai-panel {
+	flex: 1;
+	min-width: 250px;
+	margin: 0;
+	border: 1px solid var(--border-primary);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	transition: width 0.1s ease;
+}
+
+.panel-content {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	border-radius: 8px;
+	overflow: hidden;
+	padding: 0;
+	margin: 0;
+	background-color: transparent;
+	max-width: 100%;
+}
+
+/* Panel Headers */
+.terminal-header,
+.ai-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 6px 12px;
+	background: var(--bg-primary);
+	border-radius: 8px 8px 0 0;
+	height: 32px;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--border-primary);
+}
+
+.panel-title {
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 24px;
+	color: rgba(139, 233, 253, 0.8);
+}
+
+.ai-title {
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 24px;
+	color: rgba(189, 147, 249, 0.8);
+}
+
+/* Toggle AI Panel Button */
+.toggle-ai-button {
+	background-color: rgba(189, 147, 249, 0.1);
+	color: rgba(189, 147, 249, 0.9);
+	border: 1px solid rgba(189, 147, 249, 0.3);
+	padding: 6px 12px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 12px;
+	height: 28px;
+	line-height: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+	font-weight: 500;
+}
+
+.toggle-ai-button:hover {
+	background-color: rgba(189, 147, 249, 0.15);
+	border-color: rgba(189, 147, 249, 0.5);
+	box-shadow: 0 4px 12px rgba(189, 147, 249, 0.2);
+}
+
+/* Resizing Functionality */
+.resizer {
+	width: 8px;
+	background-color: transparent;
+	cursor: col-resize;
+	transition: all 0.2s ease;
+	position: relative;
+	user-select: none;
+	margin: 0;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 10;
+}
+
+.resizer-handle {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.resizer-dots {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	opacity: 0.4;
+	transition: all 0.2s ease;
+}
+
+.resizer-dots .dot {
+	width: 3px;
+	height: 3px;
+	background-color: var(--text-secondary);
+	border-radius: 50%;
+}
+
+.resizer:hover .resizer-dots {
+	opacity: 0.8;
+}
+
+.resizer:hover .resizer-dots .dot {
+	background-color: var(--accent-purple);
+	box-shadow: 0 0 4px rgba(189, 147, 249, 0.3);
+}
+
+.resizer.resizing .resizer-dots {
+	opacity: 1;
+}
+
+.resizer.resizing .resizer-dots .dot {
+	background-color: var(--accent-purple);
+	box-shadow: 0 0 6px rgba(189, 147, 249, 0.5);
+}
+
+/* Terminal Full Width when AI panel is hidden */
+.terminal-panel.full-width {
+	flex: 1 !important;
+	width: 100% !important;
+	max-width: 100% !important;
+}
+
+/* Terminal Tabs System */
+.terminal-tabs {
+	background-color: rgba(68, 71, 90, 0.3);
+	border-bottom: 1px solid var(--border-primary);
+	padding: 0;
+	margin: 0;
+}
+
+.tabs-container {
+	display: flex;
+	align-items: center;
+	padding: 0 4px;
+	height: 28px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-primary) transparent;
+}
+
+.tabs-container::-webkit-scrollbar {
+	height: 3px;
+}
+
+.tabs-container::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.tabs-container::-webkit-scrollbar-thumb {
+	background: var(--border-primary);
+	border-radius: 2px;
+}
+
+.tab {
+	display: flex;
+	align-items: center;
+	padding: 4px 8px;
+	margin-right: 2px;
+	background: var(--bg-primary);
+	border: 1px solid var(--border-primary);
+	border-bottom: none;
+	border-radius: 6px 6px 0 0;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	min-width: 80px;
+	max-width: 160px;
+	position: relative;
+	font-size: 12px;
+	height: 24px;
+	box-sizing: border-box;
+}
+
+.tab:hover {
+	background: var(--bg-quaternary);
+	border-color: rgba(189, 147, 249, 0.3);
+}
+
+.tab.active {
+	background: #21222c;
+	border-color: rgba(80, 250, 123, 0.5);
+	color: var(--accent-green);
+	font-weight: 600;
+	box-shadow: 0 2px 8px rgba(80, 250, 123, 0.1);
+}
+
+.tab.active:hover {
+	background: #21222c;
+	border-color: rgba(80, 250, 123, 0.7);
+}
+
+.tab-name {
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--text-primary);
+	font-size: 12px;
+	line-height: 1;
+	outline: none;
+	border: none;
+	background: transparent;
+	cursor: inherit;
+}
+
+.tab.active .tab-name {
+	color: var(--accent-green);
+}
+
+.close-tab {
+	background: none;
+	border: none;
+	color: #6272a4;
+	cursor: pointer;
+	padding: 2px 4px;
+	margin-left: 6px;
+	border-radius: 3px;
+	font-size: 14px;
+	line-height: 1;
+	width: 16px;
+	height: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+	font-weight: bold;
+}
+
+.close-tab:hover {
+	color: var(--accent-red);
+	background-color: rgba(255, 85, 85, 0.1);
+}
+
+.new-tab {
+	background: none;
+	border: 1px solid var(--border-primary);
+	color: white;
+	cursor: pointer;
+	padding: 4px 8px;
+	margin-left: 4px;
+	border-radius: 6px;
+	font-size: 14px;
+	line-height: 1;
+	width: 28px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
+
+.new-tab:hover {
+	color: var(--accent-green);
+	background-color: rgba(80, 250, 123, 0.1);
+	border-color: rgba(80, 250, 123, 0.3);
+}
+
+.settings-tab-btn {
+	background: none;
+	border: 1px solid var(--border-primary);
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 4px 8px;
+	margin-left: 4px;
+	border-radius: 6px;
+	font-size: 14px;
+	line-height: 1;
+	width: 28px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
+
+.settings-tab-btn:hover {
+	color: var(--accent-purple);
+	background-color: rgba(189, 147, 249, 0.1);
+	border-color: rgba(189, 147, 249, 0.3);
+}
+
+.settings-tab.active {
+	background: #21222c;
+	border-color: rgba(189, 147, 249, 0.5);
+	color: var(--accent-purple);
+	font-weight: 600;
+	box-shadow: 0 2px 8px rgba(189, 147, 249, 0.1);
+}
+
+/* Terminal Content Area */
+.output-area {
+	flex: 1;
+	overflow: hidden;
+	font-size: 12px;
+	line-height: 1.5;
+	border-radius: 0;
+	scroll-behavior: smooth;
+	margin-top: 0;
+	background: var(--bg-primary);
+	box-sizing: border-box;
+	position: relative;
+	z-index: 1;
+	user-select: text;
+	width: 100%;
+	min-height: 0;
+}
+
+/* Terminal Instances */
+.terminal-container {
+	flex: 1;
+	position: relative;
+	overflow: hidden;
+	min-height: 0;
+	height: 100%;
+}
+
+.terminal-instance {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: none;
+}
+
+.terminal-instance.active {
+	display: flex;
+	flex-direction: column;
+}
+
+.xterm-container {
+	width: 100%;
+	height: 100%;
+	padding: 8px;
+	background: #282a36;
+	border-radius: 8px;
+	overflow: hidden;
+	flex: 1;
+}
+
+/* Input Area Styles */
+.input-area {
+	position: relative;
+	padding: 12px 16px;
+	display: flex;
+	align-items: flex-start;
+	background: var(--bg-primary);
+	border-radius: 8px;
+	margin: 0;
+	flex-direction: column;
+	width: 100%;
+	box-sizing: border-box;
+	z-index: 5;
+	transition: box-shadow 0.3s ease;
+	border: 1px solid var(--border-primary);
+}
+
+
+
+.ai-panel .input-area {
+	border-color: rgba(189, 147, 249, 0.5);
+	border-top-color: rgba(255, 121, 198, 0.5);
+	box-shadow: 0 4px 12px rgba(189, 147, 249, 0.1), 0 0 3px rgba(189, 147, 249, 0.15);
+}
+
+.ai-panel .input-area:hover,
+.ai-panel .input-area:focus-within {
+	box-shadow: 0 6px 16px rgba(189, 147, 249, 0.15), 0 0 6px rgba(189, 147, 249, 0.2);
+}
+
+.prompt-container {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	padding: 0 4px;
+}
+
+.prompt {
+	margin-right: 12px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;
+	line-height: 24px;
+}
+
+
+
+.ai-panel .prompt {
+	color: rgba(189, 147, 249, 0.85);
+}
+
+.input-area textarea {
+	flex: 1;
+	background: transparent;
+	border: none;
+	color: #c9c9c9;
+	font-family: monospace;
+	font-size: 12px;
+	outline: none;
+	resize: none;
+	min-height: 24px;
+	overflow-y: auto;
+	line-height: 1.5;
+	width: calc(100% - 24px);
+	padding: 0;
+	letter-spacing: 0.75px;
+}
+
+.input-area textarea:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.input-area textarea::placeholder,
+.input-area input::placeholder {
+	color: #6272a4;
+	opacity: 0.7;
+}
+
+/* AI Input Container Styles */
+.ai-input-container {
+	padding: 8px 12px;
+	background: var(--bg-primary);
+	border-top: 1px solid var(--border-primary);
+	border-radius: 0;
+	margin: 0;
+	flex-shrink: 0;
+}
+
+.input-wrapper {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: rgba(68, 71, 90, 0.8);
+	border: 1px solid rgba(189, 147, 249, 0.5);
+	border-radius: 8px;
+	transition: all 0.3s ease;
+}
+
+.input-wrapper:hover,
+.input-wrapper:focus-within {
+	border-color: rgba(189, 147, 249, 0.8);
+	box-shadow: 0 0 12px rgba(189, 147, 249, 0.2);
+}
+
+.input-wrapper .prompt {
+	color: var(--accent-purple);
+	font-weight: bold;
+	font-family: monospace;
+}
+
+.input-wrapper #ai-input {
+	flex: 1;
+	background: transparent;
+	border: none;
+	color: var(--text-primary);
+	font-family: monospace;
+	font-size: 14px;
+	outline: none;
+	padding: 0;
+}
+
+.input-wrapper #ai-input::placeholder {
+	color: #6272a4;
+	opacity: 0.7;
+}
+
+.send-btn {
+	background: transparent;
+	border: none;
+	color: var(--accent-purple);
+	cursor: pointer;
+	padding: 4px;
+	border-radius: 4px;
+	transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.send-btn:hover {
+	background: rgba(189, 147, 249, 0.1);
+	color: var(--accent-purple);
+}
+
+/* Current Directory Display */
+.current-directory {
+	padding: 8px 15px;
+	background: var(--bg-primary);
+	color: #a9a9a9;
+	font-size: 13px;
+	border-top: 1px solid var(--border-primary);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+
+
+.ai-panel .current-directory {
+	color: rgba(189, 147, 249, 0.8);
+}
+
+/* AI Message Blocks */
+.ai-messages {
+	flex: 1;
+	overflow-y: auto;
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	scroll-behavior: smooth;
+}
+
+/* 已移除旧的 ai-message-block 样式，现在使用 AIPanel.astro 中的 chat-entry 样式 */
+
+/* 已移除旧的 block-header, block-prompt, block-text, block-content 样式 
+   现在使用 AIPanel.astro 中的 chat-question 和 chat-output 样式 */
+
+/* 已移除旧的 ai-response 样式，现在使用 AIPanel.astro 中的 chat-output 样式 */
+
+.command-suggestion {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	background: rgba(0, 0, 0, 0.4);
+	padding: 12px 16px;
+	border-radius: 8px;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	transition: all 0.2s ease;
+	position: relative;
+	overflow: hidden;
+}
+
+.command-suggestion::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 3px;
+	height: 100%;
+	background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green) 100%);
+	border-radius: 0 2px 2px 0;
+}
+
+.command-suggestion:hover {
+	background: rgba(0, 0, 0, 0.5);
+	border-color: rgba(255, 255, 255, 0.15);
+	transform: translateX(2px);
+}
+
+.command-suggestion code {
+	color: var(--accent-green);
+	font-family: 'SF Mono', 'Monaco', 'JetBrains Mono', monospace;
+	font-size: 13px;
+	flex: 1;
+	font-weight: 500;
+}
+
+/* Action Buttons */
+.copy-btn, .run-btn {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	color: var(--text-secondary);
+	padding: 6px 10px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 500;
+	transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+	background: rgba(139, 233, 253, 0.1);
+	border-color: var(--accent-blue);
+	color: var(--accent-blue);
+	transform: scale(1.05);
+}
+
+.run-btn:hover {
+	background: rgba(80, 250, 123, 0.1);
+	border-color: var(--accent-green);
+	color: var(--accent-green);
+	transform: scale(1.05);
+}
+
+/* Scrollbar Styling */
+.output-area::-webkit-scrollbar {
+	width: 8px;
+}
+
+.output-area::-webkit-scrollbar-track {
+	background: var(--bg-primary);
+	border-radius: 4px;
+}
+
+.output-area::-webkit-scrollbar-thumb {
+	background: var(--border-primary);
+	border-radius: 4px;
+	opacity: 0.5;
+}
+
+.output-area::-webkit-scrollbar-thumb:hover {
+	background: #6272a4;
+	opacity: 0.8;
+}
+
+/* Dracula Theme Specific Adjustments */
+.resizing-active {
+	user-select: none !important;
+}
+
+.resizing-active * {
+	user-select: none !important;
+	pointer-events: none !important;
+}
+
+.resizing-active .resizer {
+	pointer-events: all !important;
+}
+
+/* 拖拽时的视觉反馈 */
+.split-container.resizing-active::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(189, 147, 249, 0.05);
+	pointer-events: none;
+	z-index: 5;
+}
+
+/* Settings Panel Styles */
+.settings-panel {
+	display: none;
+	padding: 20px;
+	background: var(--bg-primary);
+	color: var(--text-primary);
+	overflow-y: auto;
+	height: 100%;
+}
+
+.settings-panel.active {
+	display: block;
+}
+
+.settings-content h2 {
+	margin: 0 0 20px 0;
+	color: var(--text-primary);
+	font-size: 24px;
+	font-weight: 600;
+	border-bottom: 2px solid var(--accent-purple);
+	padding-bottom: 10px;
+}
+
+.settings-section {
+	margin-bottom: 30px;
+	padding: 20px;
+	background: var(--bg-secondary);
+	border-radius: 8px;
+	border: 1px solid var(--border-primary);
+}
+
+.settings-section h3 {
+	margin: 0 0 15px 0;
+	color: var(--accent-purple);
+	font-size: 18px;
+	font-weight: 500;
+}
+
+.setting-group {
+	margin-bottom: 15px;
+}
+
+.setting-group label {
+	display: block;
+	margin-bottom: 8px;
+	color: var(--text-primary);
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.setting-select,
+.setting-input {
+	width: 100%;
+	padding: 10px 12px;
+	border: 2px solid var(--border-primary);
+	border-radius: 6px;
+	background: var(--bg-primary);
+	color: var(--text-primary);
+	font-size: 14px;
+	font-family: monospace;
+	transition: all 0.2s ease;
+}
+
+.setting-select:focus,
+.setting-input:focus {
+	outline: none;
+	border-color: var(--accent-purple);
+	box-shadow: 0 0 0 3px rgba(189, 147, 249, 0.2);
+}
+
+.settings-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 20px;
+	flex-wrap: wrap;
+}
+
+.setting-button {
+	padding: 10px 20px;
+	border: none;
+	border-radius: 6px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: var(--bg-secondary);
+	color: var(--text-primary);
+	border: 1px solid var(--border-primary);
+}
+
+.setting-button:hover {
+	background: var(--bg-hover);
+	transform: translateY(-1px);
+}
+
+.setting-button.primary {
+	background: var(--accent-purple);
+	color: white;
+	border-color: var(--accent-purple);
+}
+
+.setting-button.primary:hover {
+	background: rgba(189, 147, 249, 0.8);
+}
+
+.settings-status {
+	margin-top: 15px;
+	padding: 10px;
+	border-radius: 6px;
+	font-size: 14px;
+}
+
+.status-message.success {
+	background: rgba(80, 250, 123, 0.1);
+	border: 1px solid var(--accent-green);
+	color: var(--accent-green);
+}
+
+.status-message.error {
+	background: rgba(255, 85, 85, 0.1);
+	border: 1px solid #ff5555;
+	color: #ff5555;
+}
+
+.status-message.warning {
+	background: rgba(241, 250, 140, 0.1);
+	border: 1px solid var(--accent-yellow);
+	color: var(--accent-yellow);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+	.tabs-container {
+		padding: 0 4px;
+	}
+	
+	.tab {
+		min-width: 80px;
+		max-width: 150px;
+		padding: 4px 8px;
+	}
+	
+	.new-tab {
+		width: 28px;
+		height: 24px;
+	}
+	
+	.settings-panel {
+		padding: 15px;
+	}
+	
+	.settings-actions {
+		flex-direction: column;
+	}
+	
+	.setting-button {
+		width: 100%;
+	}
+}

@@ -1,0 +1,240 @@
+---
+---
+
+<div class="terminal-wrapper">
+  <div class="terminal-header">
+    <div class="terminal-title">
+      <span id="terminal-status" class="status-indicator">🔴</span>
+      <span>XTerminal - 本地终端</span>
+    </div>
+    <div class="terminal-controls">
+      <button id="reconnect-btn" class="control-btn" title="重新连接">🔄</button>
+      <button id="clear-btn" class="control-btn" title="清空终端">🗑️</button>
+    </div>
+  </div>
+  <div id="terminal-container">
+    <div id="terminal"></div>
+  </div>
+</div>
+
+
+
+<script>
+  import { Terminal } from '@xterm/xterm';
+  import { FitAddon } from '@xterm/addon-fit';
+  import { WebLinksAddon } from '@xterm/addon-web-links';
+  import '@xterm/xterm/css/xterm.css';
+
+  // 全局变量
+  let terminal = null;
+  let websocket = null;
+  let fitAddon = null;
+  let isConnected = false;
+
+  // 等待DOM加载完成
+  document.addEventListener('DOMContentLoaded', () => {
+    initializeTerminal();
+    setupEventListeners();
+  });
+
+  function initializeTerminal() {
+    const terminalElement = document.getElementById('terminal');
+    if (!terminalElement) return;
+
+    // 创建终端实例
+    terminal = new Terminal({
+      cursorBlink: true,
+      theme: {
+        background: '#000000',
+        foreground: '#ffffff',
+        cursor: '#ffffff',
+        selection: '#3e4451',
+        black: '#000000',
+        red: '#e06c75',
+        green: '#98c379',
+        yellow: '#e5c07b',
+        blue: '#61afef',
+        magenta: '#c678dd',
+        cyan: '#56b6c2',
+        white: '#ffffff',
+        brightBlack: '#5c6370',
+        brightRed: '#e06c75',
+        brightGreen: '#98c379',
+        brightYellow: '#e5c07b',
+        brightBlue: '#61afef',
+        brightMagenta: '#c678dd',
+        brightCyan: '#56b6c2',
+        brightWhite: '#ffffff'
+      },
+      fontFamily: 'SF Mono, Monaco, Inconsolata, Fira Code, Fira Mono, Roboto Mono, monospace',
+      fontSize: 14,
+      letterSpacing: 0.5,
+      lineHeight: 1.2,
+      rows: 30,
+      cols: 80,
+      scrollback: 1000,
+      allowTransparency: false,
+    });
+
+    // 加载插件
+    fitAddon = new FitAddon();
+    const webLinksAddon = new WebLinksAddon();
+    
+    terminal.loadAddon(fitAddon);
+    terminal.loadAddon(webLinksAddon);
+
+    // 挂载到DOM
+    terminal.open(terminalElement);
+    
+    // 自适应大小
+    setTimeout(() => {
+      fitAddon.fit();
+    }, 100);
+
+    // 连接到WebSocket终端服务
+    connectToTerminal();
+
+    // 监听终端输入
+    terminal.onData((data) => {
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({
+          type: 'input',
+          data: data
+        }));
+      }
+    });
+
+    // 监听终端大小变化
+    terminal.onResize(({ cols, rows }) => {
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({
+          type: 'resize',
+          cols: cols,
+          rows: rows
+        }));
+      }
+    });
+  }
+
+  function connectToTerminal() {
+    updateStatus('🔄', '连接中...');
+    terminal.writeln('\x1b[33m正在连接到本地终端...\x1b[0m');
+
+    try {
+      // 连接到WebSocket服务器
+      websocket = new WebSocket('ws://localhost:8080/terminal');
+
+      websocket.onopen = () => {
+        console.log('✅ WebSocket连接建立成功');
+        updateStatus('🟢', '已连接');
+        isConnected = true;
+      };
+
+      websocket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          switch (message.type) {
+            case 'output':
+              terminal.write(message.data);
+              break;
+              
+            case 'connected':
+              terminal.write('\x1b[2J\x1b[H'); // 清屏
+              terminal.writeln('\x1b[32m🚀 XTerminal 已连接到本地终端\x1b[0m');
+              terminal.writeln(`\x1b[36mShell: ${message.shell}\x1b[0m`);
+              terminal.writeln(`\x1b[36mPID: ${message.pid}\x1b[0m`);
+              terminal.writeln('');
+              break;
+              
+            case 'exit':
+              terminal.writeln(`\x1b[31m\n终端进程已退出 (code: ${message.code})\x1b[0m`);
+              updateStatus('🔴', '已断开');
+              isConnected = false;
+              break;
+              
+            case 'error':
+              terminal.writeln(`\x1b[31m错误: ${message.message}\x1b[0m`);
+              updateStatus('🔴', '错误');
+              isConnected = false;
+              break;
+              
+            default:
+              console.warn('未知消息类型:', message.type);
+          }
+        } catch (error) {
+          console.error('解析消息失败:', error);
+        }
+      };
+
+      websocket.onerror = (error) => {
+        console.error('WebSocket错误:', error);
+        terminal.writeln('\x1b[31m\n连接错误，请检查终端服务是否启动\x1b[0m');
+        updateStatus('🔴', '连接错误');
+        isConnected = false;
+      };
+
+      websocket.onclose = () => {
+        console.log('WebSocket连接已关闭');
+        if (isConnected) {
+          terminal.writeln('\x1b[31m\n连接已断开\x1b[0m');
+        }
+        updateStatus('🔴', '已断开');
+        isConnected = false;
+      };
+
+    } catch (error) {
+      console.error('连接失败:', error);
+      terminal.writeln('\x1b[31m连接失败，请确保终端服务正在运行\x1b[0m');
+      updateStatus('🔴', '连接失败');
+    }
+  }
+
+  function updateStatus(indicator, text) {
+    const statusElement = document.getElementById('terminal-status');
+    const titleElement = document.querySelector('.terminal-title span:last-child');
+    
+    if (statusElement) {
+      statusElement.textContent = indicator;
+    }
+    
+    if (titleElement) {
+      titleElement.textContent = `XTerminal - ${text}`;
+    }
+  }
+
+  function setupEventListeners() {
+    // 窗口大小变化时重新适配
+    window.addEventListener('resize', () => {
+      if (fitAddon && terminal) {
+        setTimeout(() => {
+          fitAddon.fit();
+        }, 100);
+      }
+    });
+
+    // 重新连接按钮
+    document.getElementById('reconnect-btn')?.addEventListener('click', () => {
+      if (websocket) {
+        websocket.close();
+      }
+      setTimeout(() => {
+        connectToTerminal();
+      }, 500);
+    });
+
+    // 清空终端按钮
+    document.getElementById('clear-btn')?.addEventListener('click', () => {
+      if (terminal) {
+        terminal.clear();
+      }
+    });
+
+    // 页面卸载时关闭连接
+    window.addEventListener('beforeunload', () => {
+      if (websocket) {
+        websocket.close();
+      }
+    });
+  }
+</script>
